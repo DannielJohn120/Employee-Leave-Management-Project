@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="home-container">
+  <h2>Welcome to the Employee Leave Management System</h2>
+  {% if user %}
+    <p>Hello, <strong>{{ user.name }}</strong>!</p>
+    <p>Use the navigation bar above to manage your account or leave requests.</p>
+  {% else %}
+    <p>Welcome! Please use the navigation bar above to <strong>Login</strong> or <strong>Register</strong>.</p>
+  {% endif %}
+</div>
+
+<style>
+  .home-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 80vh; /* centers content vertically on the page */
+    color: #fff; /* make text readable on dark background */
+  }
+
+  .home-container h2 {
+    font-size: 2em;
+    margin-bottom: 10px;
+    color: #ff4444; /* red accent to match your theme */
+  }
+
+  .home-container p {
+    font-size: 1.1em;
+    line-height: 1.6;
+  }
+</style>
+{% endblock %}
