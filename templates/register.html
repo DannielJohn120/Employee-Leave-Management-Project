@@ -1,18 +1,94 @@
 {% extends "base.html" %}
+
 {% block content %}
-  <h2>Register</h2>
-  <form method="post">
-    <label>Name</label>
-    <input name="name" required>
-    <label>Email</label>
-    <input name="email" type="email" required>
-    <label>Password</label>
-    <input name="password" type="password" required>
-    <label>Role</label>
-    <select name="role">
-      <option value="employee" selected>Employee</option>
-      <option value="hr">HR / Approver</option>
-    </select>
-    <button type="submit">Register</button>
-  </form>
+<div class="auth-container">
+  <div class="auth-box">
+    <h2>Register</h2>
+    <form method="POST">
+      <label>Name</label>
+      <input type="text" name="name" placeholder="Enter your full name" required>
+
+      <label>Email</label>
+      <input type="email" name="email" placeholder="Enter your email" required>
+
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Enter your password" required>
+
+      <label>Role</label>
+      <select name="role">
+        <option value="employee">Employee</option>
+        <option value="hr">HR</option>
+      </select>
+
+      <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+  </div>
+</div>
+
+<style>
+  .auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 90vh;
+    text-align: center;
+  }
+
+  .auth-box {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 35px;
+    border-radius: 12px;
+    width: 380px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  }
+
+  .auth-box h2 {
+    color: #ff4444;
+    margin-bottom: 20px;
+  }
+
+  .auth-box label {
+    display: block;
+    text-align: left;
+    margin-bottom: 5px;
+    color: #fff;
+  }
+
+  .auth-box input,
+  .auth-box select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border: none;
+    background: #333;
+    color: #fff;
+  }
+
+  .auth-box button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    background-color: #a51d2d;
+    color: white;
+    font-weight: bold;
+    transition: background1 0.3s;
+  }
+
+  .auth-box button:hover {
+    background-color: #d12e3d;
+  }
+
+  .auth-box a {
+    color: #ff4444;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .auth-box a:hover {
+    text-decoration: underline;
+  }
+</style>
 {% endblock %}

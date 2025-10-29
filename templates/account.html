@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="auth-box">
+    <h2>Account Information</h2>
+
+    <p><strong>Name:</strong> {{ user.name }}</p>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>Role:</strong> {{ user.role | capitalize }}</p>
+    <p><strong>Leave Balance:</strong> {{ user.leave_balance }} days</p>
+
+    <div class="button-group">
+      {% if user.role == 'employee' %}
+        <a href="{{ url_for('employee_dashboard') }}">Go to Dashboard</a>
+      {% elif user.role == 'hr' %}
+        <a href="{{ url_for('hr_dashboard') }}">Go to HR Dashboard</a>
+      {% elif user.role == 'admin' %}
+        <a href="{{ url_for('admin_dashboard') }}">Go to Admin Panel</a>
+      {% endif %}
+      <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </div>
+  </div>
+</div>
+
+<style>
+  .auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 90vh;
+    text-align: center;
+  }
+
+  .auth-box {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 40px;
+    border-radius: 12px;
+    width: 380px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  }
+
+  .auth-box h2 {
+    color: #ff4444;
+    margin-bottom: 25px;
+  }
+
+  .auth-box p {
+    color: #fff;
+    margin: 8px 0;
+    text-align: left;
+    font-size: 15px;
+  }
+
+  .button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 25px;
+  }
+
+  .button-group a {
+    display: block;
+    text-decoration: none;
+    background-color: #a51d2d;
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    transition: background1 0.3s;
+    font-weight: bold;
+  }
+
+  .button-group a:hover {
+    background-color: #d12e3d;
+  }
+
+  .logout-btn {
+    background-color: #444;
+  }
+
+  .logout-btn:hover {
+    background-color: #666;
+  }
+</style>
+{% endblock %}
