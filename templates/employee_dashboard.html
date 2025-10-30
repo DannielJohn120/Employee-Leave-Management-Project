@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Employee Dashboard</h2>
+  <p>Leave balance: <strong>{{ user.leave_balance }}</strong> days</p>
+  <p><a href="{{ url_for('apply_leave') }}">Apply for Leave</a></p>
+  <h3>Your Requests</h3>
+  {% if leaves %}
+    <table>
+      <tr><th>#</th><th>Period</th><th>Days</th><th>Type</th><th>Status</th><th>Applied</th><th>Action</th></tr>
+      {% for l in leaves %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ l.start_date }} → {{ l.end_date }}</td>
+          <td>{{ l.days }}</td>
+          <td>{{ l.leave_type }}</td>
+          <td>{{ l.status }}</td>
+          <td>{{ l.applied_at }}</td>
+          <td><a href="{{ url_for('view_leave', leave_id=l.id) }}">View</a></td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No leave requests yet.</p>
+  {% endif %}
+{% endblock %}
