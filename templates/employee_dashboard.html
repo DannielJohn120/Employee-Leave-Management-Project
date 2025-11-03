@@ -1,25 +1,125 @@
 {% extends "base.html" %}
+
 {% block content %}
-  <h2>Employee Dashboard</h2>
-  <p>Leave balance: <strong>{{ user.leave_balance }}</strong> days</p>
-  <p><a href="{{ url_for('apply_leave') }}">Apply for Leave</a></p>
-  <h3>Your Requests</h3>
-  {% if leaves %}
-    <table>
-      <tr><th>#</th><th>Period</th><th>Days</th><th>Type</th><th>Status</th><th>Applied</th><th>Action</th></tr>
-      {% for l in leaves %}
+<div class="dashboard-container">
+  <div class="dashboard-box">
+    <h2>Employee Dashboard</h2>
+
+    <p><strong>Welcome, {{ user.name }}!</strong></p>
+    <p>Your current leave balance: <strong>{{ user.leave_balance }}</strong> days</p>
+
+    <div class="button-group">
+      <a href="{{ url_for('apply_leave') }}">Apply for Leave</a>
+      <a href="{{ url_for('account') }}">View Account</a>
+    </div>
+
+    <hr>
+
+    <h3>Your Leave History</h3>
+
+    {% if leaves %}
+      <table>
         <tr>
-          <td>{{ loop.index }}</td>
-          <td>{{ l.start_date }} → {{ l.end_date }}</td>
-          <td>{{ l.days }}</td>
-          <td>{{ l.leave_type }}</td>
-          <td>{{ l.status }}</td>
-          <td>{{ l.applied_at }}</td>
-          <td><a href="{{ url_for('view_leave', leave_id=l.id) }}">View</a></td>
+          <th>#</th>
+          <th>Period</th>
+          <th>Days</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Applied On</th>
         </tr>
-      {% endfor %}
-    </table>
-  {% else %}
-    <p>No leave requests yet.</p>
-  {% endif %}
+        {% for l in leaves %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ l.start_date }} → {{ l.end_date }}</td>
+            <td>{{ l.days }}</td>
+            <td>{{ l.leave_type }}</td>
+            <td>{{ l.status }}</td>
+            <td>{{ l.applied_at }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>No leave requests found.</p>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  .dashboard-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 90vh;
+    text-align: center;
+  }
+
+  .dashboard-box {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 40px;
+    border-radius: 12px;
+    width: 80%;
+    max-width: 850px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    color: white;
+  }
+
+  .dashboard-box h2 {
+    color: #ff4444;
+    margin-bottom: 20px;
+  }
+
+  .dashboard-box p {
+    color: #fff;
+    font-size: 16px;
+  }
+
+  .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+  }
+
+  .button-group a {
+    text-decoration: none;
+    background-color: #a51d2d;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    transition: background1 0.3s;
+    font-weight: bold;
+  }
+
+  .button-group a:hover {
+    background-color: #d12e3d;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+
+  th, td {
+    border: 1px solid #555;
+    padding: 10px;
+    text-align: center;
+  }
+
+  th {
+    background-color: #222;
+    color: #ff4444;
+  }
+
+  td {
+    background-color: #333;
+  }
+
+  hr {
+    border: none;
+    height: 1px;
+    background-color: #666;
+    margin: 25px 0;
+  }
+</style>
 {% endblock %}
