@@ -235,6 +235,12 @@ def account():
     user_db = query_db("SELECT * FROM users WHERE id = ?", (user['id'],), one=True)
     return render_template('account.html', user=user_db)
 
+# About the Maker  
+@app.route('/about')
+def about():
+    user = current_user()
+    return render_template('about.html', user=user)
+
 # CLI init command
 @app.cli.command("initdb")
 def initdb_command():
