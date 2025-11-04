@@ -1,36 +1,97 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="home-container">
-  <h2>Welcome to the Employee Leave Management System</h2>
-  {% if user %}
-    <p>Hello, <strong>{{ user.name }}</strong>!</p>
-    <p>Use the navigation bar above to manage your account or leave requests.</p>
-  {% else %}
-    <p>Welcome! Please use the navigation bar above to <strong>Login</strong> or <strong>Register</strong>.</p>
-  {% endif %}
+<div class="auth-container">
+  <div class="auth-box">
+    {% if user %}
+      <h2>Welcome, {{ user.name }}!</h2>
+      <p>You are logged in as <strong>{{ user.role | capitalize }}</strong>.</p>
+
+      {% if user.role == 'employee' %}
+        <a href="{{ url_for('employee_dashboard') }}" class="btn">Go to Employee Dashboard</a>
+      {% elif user.role == 'hr' %}
+        <a href="{{ url_for('hr_dashboard') }}" class="btn">Go to HR Dashboard</a>
+      {% elif user.role == 'admin' %}
+        <a href="{{ url_for('admin_dashboard') }}" class="btn">Go to Admin Panel</a>
+      {% endif %}
+
+      <a href="{{ url_for('account') }}" class="btn secondary">View Account</a>
+      <a href="{{ url_for('logout') }}" class="btn logout">Logout</a>
+
+    {% else %}
+      <h2>Welcome to the Employee Leave Management System</h2>
+      <p>
+        Please use the navigation bar above to Login or register an account. Thank you for using this app.
+      </p>
+    {% endif %}
+  </div>
 </div>
 
 <style>
-  .home-container {
+  .auth-container {
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
+    align-items: center;
+    height: 90vh;
     text-align: center;
-    height: 80vh; /* centers content vertically on the page */
-    color: #fff; /* make text readable on dark background */
   }
 
-  .home-container h2 {
-    font-size: 2em;
-    margin-bottom: 10px;
-    color: #ff4444; /* red accent to match your theme */
+  .auth-box {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 40px;
+    border-radius: 12px;
+    width: 380px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
   }
 
-  .home-container p {
-    font-size: 1.1em;
-    line-height: 1.6;
+  .auth-box h2 {
+    color: #ff4444;
+    margin-bottom: 15px;
+  }
+
+  .auth-box p {
+    color: #fff;
+    margin-bottom: 20px;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .btn {
+    display: inline-block;
+    background-color: #a51d2d;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: background1 0.3s;
+  }
+
+  .btn:hover {
+    background-color: #d12e3d;
+  }
+
+  .btn.secondary {
+    background-color: #333;
+  }
+
+  .btn.secondary:hover {
+    background-color: #555;
+  }
+
+  .btn.logout {
+    background-color: #444;
+  }
+
+  .btn.logout:hover {
+    background-color: #666;
   }
 </style>
 {% endblock %}
