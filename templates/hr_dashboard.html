@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="auth-box">
+    <h2>HR Dashboard</h2>
+
+    <h3>Pending Requests</h3>
+    {% if pending %}
+      <table>
+        <tr>
+          <th>#</th><th>Employee</th><th>Period</th><th>Days</th><th>Type</th><th>Applied</th><th>Action</th>
+        </tr>
+        {% for p in pending %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ p.employee_name }} ({{ p.employee_email }})</td>
+          <td>{{ p.start_date }} → {{ p.end_date }}</td>
+          <td>{{ p.days }}</td>
+          <td>{{ p.leave_type }}</td>
+          <td>{{ p.applied_at }}</td>
+          <td>
+            <a href="{{ url_for('view_leave', leave_id=p.id) }}">Review</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>No pending requests.</p>
+    {% endif %}
+
+    <hr>
+
+    <h3>Recent Leaves</h3>
+    {% if recent %}
+      <table>
+        <tr><th>Employee</th><th>Period</th><th>Status</th></tr>
+        {% for r in recent %}
+          <tr>
+            <td>{{ r.employee_name }}</td>
+            <td>{{ r.start_date }} → {{ r.end_date }}</td>
+            <td>{{ r.status }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>No recent records.</p>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  .auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 90vh;
+    text-align: center;
+  }
+
+  .auth-box {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 40px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 900px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    overflow-y: auto;
+  }
+
+  .auth-box h2 {
+    color: #ff4444;
+    margin-bottom: 15px;
+  }
+
+  .auth-box h3 {
+    color: #ff4444;
+    margin-top: 25px;
+    margin-bottom: 10px;
+    text-align: left;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  th, td {
+    padding: 8px;
+    border: 1px solid #555;
+    color: #fff;
+  }
+
+  th {
+    background: #a51d2d;
+  }
+
+  a {
+    color: #ff4444;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  p {
+    color: #fff;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #444;
+    margin: 25px 0;
+  }
+</style>
+{% endblock %}
