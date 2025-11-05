@@ -7,14 +7,6 @@
       <h2>Welcome, {{ user.name }}!</h2>
       <p>You are logged in as <strong>{{ user.role | capitalize }}</strong>.</p>
 
-      {% if user.role == 'employee' %}
-        <a href="{{ url_for('employee_dashboard') }}" class="btn">Go to Employee Dashboard</a>
-      {% elif user.role == 'hr' %}
-        <a href="{{ url_for('hr_dashboard') }}" class="btn">Go to HR Dashboard</a>
-      {% elif user.role == 'admin' %}
-        <a href="{{ url_for('admin_dashboard') }}" class="btn">Go to Admin Panel</a>
-      {% endif %}
-
       <a href="{{ url_for('account') }}" class="btn secondary">View Account</a>
       <a href="{{ url_for('logout') }}" class="btn logout">Logout</a>
 
