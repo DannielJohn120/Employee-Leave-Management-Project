@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="auth-box">
+    <h2>Leave Details</h2>
+
+    <p><strong>Employee Name:</strong> {{ leave.employee_name }}</p>
+    <p><strong>Email:</strong> {{ leave.employee_email }}</p>
+    <p><strong>Leave Type:</strong> {{ leave.leave_type }}</p>
+    <p><strong>Start Date:</strong> {{ leave.start_date }}</p>
+    <p><strong>End Date:</strong> {{ leave.end_date }}</p>
+    <p><strong>Days:</strong> {{ leave.days }}</p>
+    <p><strong>Status:</strong> {{ leave.status }}</p>
+    <p><strong>Reason:</strong> {{ leave.reason }}</p>
+    <p><strong>Applied At:</strong> {{ leave.applied_at }}</p>
+
+    {% if leave.review_comment %}
+      <p><strong>HR Comment:</strong> {{ leave.review_comment }}</p>
+    {% endif %}
+
+    {% if user.role == 'hr' and leave.status == 'Pending' %}
+    <hr>
+    <form action="{{ url_for('review_leave', leave_id=leave.id) }}" method="post">
+      <label>Comment:</label>
+      <textarea name="comment" rows="3" placeholder="Enter comment..." required></textarea>
+
+      <div class="button-group">
+        <button type="submit" name="action" value="approve">Approve</button>
+        <button type="submit" name="action" value="reject" class="reject-btn">Reject</button>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  .auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 90vh;
+    text-align: center;
+  }
+
+  .auth-box {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 40px;
+    border-radius: 12px;
+    width: 450px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  }
+
+  .auth-box h2 {
+    color: #ff4444;
+    margin-bottom: 20px;
+  }
+
+  .auth-box p {
+    color: #fff;
+    margin: 6px 0;
+    text-align: left;
+    font-size: 15px;
+  }
+
+  textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 6px;
+    border: none;
+    background: #333;
+    color: #fff;
+    resize: none;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .button-group button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    background-color: #a51d2d;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background1 0.3s;
+  }
+
+  .button-group button:hover {
+    background-color: #d12e3d;
+  }
+
+  .reject-btn {
+    background-color: #444;
+  }
+
+  .reject-btn:hover {
+    background-color: #666;
+  }
+
+  label {
+    color: #fff;
+    text-align: left;
+    display: block;
+    margin-top: 10px;
+  }
+</style>
+{% endblock %}
