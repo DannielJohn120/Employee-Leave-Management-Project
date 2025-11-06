@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block content %}
 <div class="auth-container">
   <div class="auth-box">
@@ -9,42 +8,69 @@
     {% if pending %}
       <table>
         <tr>
-          <th>#</th><th>Employee</th><th>Period</th><th>Days</th><th>Type</th><th>Applied</th><th>Action</th>
+          <th>#</th>
+          <th>Employee</th>
+          <th>Period</th>
+          <th>Days</th>
+          <th>Type</th>
+          <th>Applied</th>
+          <th>Action</th>
         </tr>
         {% for p in pending %}
-        <tr>
-          <td>{{ loop.index }}</td>
-          <td>{{ p.employee_name }} ({{ p.employee_email }})</td>
-          <td>{{ p.start_date }} → {{ p.end_date }}</td>
-          <td>{{ p.days }}</td>
-          <td>{{ p.leave_type }}</td>
-          <td>{{ p.applied_at }}</td>
-          <td>
-            <a href="{{ url_for('view_leave', leave_id=p.id) }}">Review</a>
-          </td>
-        </tr>
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ p.employee_name }} ({{ p.employee_email }})</td>
+            <td>{{ p.start_date }} → {{ p.end_date }}</td>
+            <td>{{ p.days }}</td>
+            <td>{{ p.leave_type }}</td>
+            <td>{{ p.applied_at }}</td>
+            <td>
+              <a href="{{ url_for('view_leave', leave_id=p.id) }}" class="btn small">Review</a>
+              <form action="{{ url_for('delete_leave', leave_id=p.id) }}" method="post" style="display:inline;">
+                <button type="submit" class="btn danger small" onclick="return confirm('Are you sure you want to delete this leave?');">
+                  Delete
+                </button>
+              </form>
+            </td>
+          </tr>
         {% endfor %}
       </table>
     {% else %}
       <p>No pending requests.</p>
     {% endif %}
 
-    <hr>
 
+    
     <h3>Recent Leaves</h3>
     {% if recent %}
       <table>
-        <tr><th>Employee</th><th>Period</th><th>Status</th></tr>
+        <tr>
+          <th>#</th>
+          <th>Employee</th>
+          <th>Period</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
         {% for r in recent %}
           <tr>
+            <td>{{ loop.index }}</td>
             <td>{{ r.employee_name }}</td>
             <td>{{ r.start_date }} → {{ r.end_date }}</td>
+            <td>{{ r.leave_type }}</td>
             <td>{{ r.status }}</td>
+            <td>
+              <form action="{{ url_for('delete_leave', leave_id=r.id) }}" method="post" style="display:inline;">
+                <button type="submit" class="btn danger small" onclick="return confirm('Delete this leave permanently?');">
+                  Delete
+                </button>
+              </form>
+            </td>
           </tr>
         {% endfor %}
       </table>
     {% else %}
-      <p>No recent records.</p>
+      <p>No recent leaves.</p>
     {% endif %}
   </div>
 </div>
@@ -54,66 +80,72 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 90vh;
-    text-align: center;
+    flex-direction: column;
+    min-height: 90vh;
   }
 
   .auth-box {
     background: rgba(0, 0, 0, 0.7);
-    padding: 40px;
+    padding: 30px;
     border-radius: 12px;
-    width: 90%;
+    width: 95%;
     max-width: 900px;
+    color: #fff;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-    overflow-y: auto;
   }
 
-  .auth-box h2 {
+  h2, h3 {
     color: #ff4444;
+    text-align: center;
     margin-bottom: 15px;
-  }
-
-  .auth-box h3 {
-    color: #ff4444;
-    margin-top: 25px;
-    margin-bottom: 10px;
-    text-align: left;
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
+    margin-bottom: 20px;
   }
 
   th, td {
-    padding: 8px;
     border: 1px solid #555;
-    color: #fff;
+    padding: 8px;
+    text-align: center;
   }
 
   th {
-    background: #a51d2d;
+    background: #222;
   }
 
-  a {
-    color: #ff4444;
+  .btn {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 6px;
     text-decoration: none;
-    font-weight: bold;
+    color: white;
+    background-color: #a51d2d;
+    transition: background1 0.3s;
   }
 
-  a:hover {
-    text-decoration: underline;
+  .btn:hover {
+    background-color: #d12e3d;
+  }
+
+  .btn.small {
+    padding: 5px 8px;
+    font-size: 13px;
+  }
+
+  .btn.danger {
+    background-color: #a51d2d;
+  }
+
+  .btn.danger:hover {
+    background-color: #c73838;
   }
 
   p {
-    color: #fff;
-  }
-
-  hr {
-    border: none;
-    border-top: 1px solid #444;
-    margin: 25px 0;
+    text-align: center;
+    color: #ddd;
   }
 </style>
 {% endblock %}
