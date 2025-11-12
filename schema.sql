@@ -5,7 +5,10 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   role TEXT NOT NULL CHECK(role IN ('employee','hr')),
-  leave_balance REAL DEFAULT 15
+  leave_balance REAL DEFAULT 15,
+  otp TEXT,
+  otp_expiry TEXT,
+  verified INTEGER DEFAULT 0
 );
 
 -- leaves table

@@ -1,10 +1,12 @@
 import os
+import random
 import sqlite3
 from datetime import datetime
 from dateutil.parser import parse as parse_date
 from flask import Flask, g, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
+from datetime import datetime, timedelta
 
 # --- Config ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -108,14 +110,28 @@ def register():
             return redirect(url_for('register'))
 
         pw_hash = generate_password_hash(password)
+        otp = str(random.randint(100000, 999999))
+        otp_expiry = (datetime.utcnow() + timedelta(minutes=5)).isoformat()
+
         db = get_db()
-        cur = db.execute("INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)",
-                         (name, email, pw_hash, role))
+        cur = db.execute(
+            "INSERT INTO users (name,email,password_hash,role,otp,otp_expiry,verified) VALUES (?,?,?,?,?,?,0)",
+            (name, email, pw_hash, role, otp, otp_expiry)
+        )
         db.commit()
-        user = query_db("SELECT * FROM users WHERE id=?", (cur.lastrowid,), one=True)
-        login_user(user)
-        flash("Registered and logged in.", "success")
-        return redirect(url_for('index'))
+
+        # Send OTP email using your employee mail sender
+        msg = Message(
+            subject="Employee Leave System - Verify your Email",
+            recipients=[email],
+            body=f"Hello {name},\n\nYour OTP code is: {otp}\n\nIt is valid for 5 minutes."
+        )
+        with employee_mail_app.app_context():
+            mail_emp.send(msg)
+
+        session['pending_email'] = email
+        flash("OTP sent to your email. Please verify.", "info")
+        return redirect(url_for('verify_otp'))
 
     return render_template('register.html')
 
@@ -162,6 +178,21 @@ def apply_leave():
         end = request.form.get('end_date')
         reason = request.form.get('reason','').strip()
         leave_type = request.form.get('leave_type','Vacation')
+
+        # Convert to datetime for comparison
+        start_date = datetime.strptime(start, "%Y-%m-%d")
+        end_date = datetime.strptime(end, "%Y-%m-%d")
+        today = datetime.now().date()
+
+        # Prevent applying for past dates
+        if start_date.date() < today or end_date.date() < today:
+            flash("You cannot apply for leave on previous dates.", "danger")
+            return redirect(url_for('apply_leave'))
+
+        # Prevent end before start
+        if end_date < start_date:
+            flash("End date cannot be before start date.", "danger")
+            return redirect(url_for('apply_leave'))
 
         days = calc_days(start, end)
         emp = query_db("SELECT * FROM users WHERE id=?", (user['id'],), one=True)
@@ -317,6 +348,35 @@ def delete_leave(leave_id):
 
     flash("Leave deleted successfully.", "info")
     return redirect(url_for('hr_dashboard'))
+
+# Otp 
+@app.route('/verify_otp', methods=['GET', 'POST'])
+def verify_otp():
+    email = session.get('pending_email')
+    if not email:
+        flash("No pending verification. Please register.", "warning")
+        return redirect(url_for('register'))
+
+    user = query_db("SELECT * FROM users WHERE email=?", (email,), one=True)
+
+    if request.method == 'POST':
+        entered_otp = request.form.get('otp','').strip()
+        if not user:
+            flash("User not found.", "danger")
+            return redirect(url_for('register'))
+
+        if user['otp'] == entered_otp and datetime.utcnow() < datetime.fromisoformat(user['otp_expiry']):
+            db = get_db()
+            db.execute("UPDATE users SET verified=1, otp=NULL, otp_expiry=NULL WHERE email=?", (email,))
+            db.commit()
+
+            session.pop('pending_email')
+            flash("Account verified! You can now login.", "success")
+            return redirect(url_for('login'))
+        else:
+            flash("Invalid or expired OTP. Please try again.", "danger")
+
+    return render_template('verify_otp.html')
 
 
 
