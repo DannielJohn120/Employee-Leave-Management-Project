@@ -8,8 +8,13 @@
       <label>Email</label>
       <input type="email" name="email" placeholder="Enter your email" required>
 
-      <label>Password</label>
-      <input type="password" name="password" placeholder="Enter your password" required>
+   <label>Password</label>
+      <input type="password" name="password" id="password" placeholder="Enter your password" required>
+
+     <div class="show-password" style="display: flex; align-items: center; justify-content: flex-start; gap: 5px;">
+  <input type="checkbox" id="showPassword" onclick="togglePassword()"> 
+  <label for="showPassword">Show Password</label>
+</div>
 
       <button type="submit">Login</button>
     </form>
@@ -81,4 +86,12 @@
     text-decoration: underline;
   }
 </style>
+
+<script>
+  function togglePassword() {
+    const passwordInput = document.getElementById('password');
+    const checkbox = document.getElementById('showPassword');
+    passwordInput.type = checkbox.checked ? 'text' : 'password';
+  }
+</script>
 {% endblock %}
