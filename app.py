@@ -114,9 +114,11 @@ def register():
         otp_expiry = (datetime.utcnow() + timedelta(minutes=5)).isoformat()
 
         db = get_db()
+        registered = datetime.utcnow().isoformat()
+
         cur = db.execute(
-            "INSERT INTO users (name,email,password_hash,role,otp,otp_expiry,verified) VALUES (?,?,?,?,?,?,0)",
-            (name, email, pw_hash, role, otp, otp_expiry)
+            "INSERT INTO users (name,email,password_hash,role,otp,otp_expiry,verified,registered_at) VALUES (?,?,?,?,?,?,0,?)",
+            (name, email, pw_hash, role, otp, otp_expiry, registered)
         )
         db.commit()
 

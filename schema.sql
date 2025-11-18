@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
   leave_balance REAL DEFAULT 15,
   otp TEXT,
   otp_expiry TEXT,
-  verified INTEGER DEFAULT 0
+  verified INTEGER DEFAULT 0,
+  registered_at TEXT NOT NULL
 );
 
 -- leaves table
