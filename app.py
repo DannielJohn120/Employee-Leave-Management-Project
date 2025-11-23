@@ -25,7 +25,7 @@ app.config.update(
     MAIL_USE_TLS=True,
     MAIL_USERNAME='dmorales.a12344953@umak.edu.ph',
     MAIL_PASSWORD='pfsqtwqntvtqtnif',
-    MAIL_DEFAULT_SENDER=('Employee Leave System', 'dmorales.a12344953@umak.edu.ph')
+    MAIL_DEFAULT_SENDER=('MoraLeave System', 'dmorales.a12344953@umak.edu.ph')
 )
 mail_hr = Mail(app)  # this will send HR notification emails
 
@@ -37,7 +37,7 @@ employee_mail_app.config.update(
     MAIL_USE_TLS=True,
     MAIL_USERNAME='danniel.j22@gmail.com',
     MAIL_PASSWORD='ccbwbjlzipqqokmh',
-    MAIL_DEFAULT_SENDER=('Employee Leave System', 'danniel.j22@gmail.com')
+    MAIL_DEFAULT_SENDER=('MoraLeave System', 'danniel.j22@gmail.com')
 )
 mail_emp = Mail(employee_mail_app)
 
@@ -99,6 +99,7 @@ def register():
         email = request.form.get('email','').strip().lower()
         password = request.form.get('password','')
         role = request.form.get('role','employee')
+        gender = request.form.get("gender")
 
         if not name or not email or not password:
             flash("Fill all required fields.", "warning")
@@ -117,14 +118,14 @@ def register():
         registered = datetime.utcnow().isoformat()
 
         cur = db.execute(
-            "INSERT INTO users (name,email,password_hash,role,otp,otp_expiry,verified,registered_at) VALUES (?,?,?,?,?,?,0,?)",
-            (name, email, pw_hash, role, otp, otp_expiry, registered)
+            "INSERT INTO users (name,email,password_hash,role,otp,otp_expiry,verified,registered_at,gender) VALUES (?,?,?,?,?,?,0,?,?)",
+            (name, email, pw_hash, role, otp, otp_expiry, registered,gender)
         )
         db.commit()
 
         # Send OTP email using your employee mail sender
         msg = Message(
-            subject="Employee Leave System - Verify your Email",
+            subject="MoraLeave System - Verify your Email",
             recipients=[email],
             body=f"Hello {name},\n\nYour OTP code is: {otp}\n\nIt is valid for 5 minutes."
         )
@@ -176,22 +177,21 @@ def apply_leave():
         return redirect(url_for('index'))
 
     if request.method == 'POST':
+        # Get form data
         start = request.form.get('start_date')
         end = request.form.get('end_date')
         reason = request.form.get('reason','').strip()
         leave_type = request.form.get('leave_type','Vacation')
 
-        # Convert to datetime for comparison
+        # Convert to datetime
         start_date = datetime.strptime(start, "%Y-%m-%d")
         end_date = datetime.strptime(end, "%Y-%m-%d")
         today = datetime.now().date()
 
-        # Prevent applying for past dates
+        # Validation
         if start_date.date() < today or end_date.date() < today:
             flash("You cannot apply for leave on previous dates.", "danger")
             return redirect(url_for('apply_leave'))
-
-        # Prevent end before start
         if end_date < start_date:
             flash("End date cannot be before start date.", "danger")
             return redirect(url_for('apply_leave'))
@@ -199,113 +199,139 @@ def apply_leave():
         days = calc_days(start, end)
         emp = query_db("SELECT * FROM users WHERE id=?", (user['id'],), one=True)
 
-        if days > emp['leave_balance']:
-            flash(f"Insufficient leave balance. You have {emp['leave_balance']} days.", "danger")
+        allowed_days = emp['leave_balance']
+        deduct_balance = True
+
+        # Special leave rules
+        if leave_type == "Maternity Leave":
+            allowed_days = 105
+            deduct_balance = False
+            if emp["gender"] != "Female":
+                flash("Only female employees can apply for maternity leave.", "danger")
+                return redirect(url_for('apply_leave'))
+
+        elif leave_type == "Paternity Leave":
+            allowed_days = 7
+            deduct_balance = False
+            if emp["gender"] != "Male":
+                flash("Only male employees can apply for paternity leave.", "danger")
+                return redirect(url_for('apply_leave'))
+
+        if days > allowed_days:
+            flash(f"You can only take up to {allowed_days} days for {leave_type}.", "danger")
             return redirect(url_for('apply_leave'))
 
+        # Insert leave
         db = get_db()
-        db.execute("""INSERT INTO leaves (employee_id,start_date,end_date,days,leave_type,reason,applied_at)
-                      VALUES (?,?,?,?,?,?,?)""",
-                   (user['id'], start, end, days, leave_type, reason, iso_now()))
+        db.execute("""INSERT INTO leaves (employee_id,start_date,end_date,days,leave_type,reason,applied_at,status)
+                      VALUES (?,?,?,?,?,?,?,?)""",
+                   (user['id'], start, end, days, leave_type, reason, iso_now(), 'Pending'))
         db.commit()
 
-        # Notify HR users (sent by dmorales)
+        # Deduct balance
+        if deduct_balance:
+            new_balance = emp['leave_balance'] - days
+            db.execute("UPDATE users SET leave_balance=? WHERE id=?", (new_balance, user['id']))
+            db.commit()
+
+        # Notify HR (also inside POST)
         hr_users = query_db("SELECT email FROM users WHERE role='hr'")
         for hr in hr_users:
             msg = Message(
-                subject="New Leave Application Submitted",
+                subject="MoraLeave System -New Leave Application Submitted",
                 recipients=[hr['email']],
-                body=f"An employee named {user['name']} has applied for leave from {start} to {end}.\n\nReason: {reason}"
+                body=f"Employee {user['name']} applied for leave from {start} to {end}.\nReason: {reason}"
             )
             with app.app_context():
                 mail_hr.send(msg)
 
-        flash("Leave applied successfully. HR notified via email.", "success")
+        flash("Leave application submitted successfully. HR notified.", "success")
         return redirect(url_for('employee_dashboard'))
 
+    # GET request: render form
     return render_template('apply_leave.html', user=user)
 
 # --- HR Dashboard ---
 @app.route('/hr')
 def hr_dashboard():
-    user = current_user()
-    if not user or user['role'] != 'hr':
-        flash("Access denied.", "danger")
-        return redirect(url_for('index'))
-    pending = query_db("SELECT l.*, u.name as employee_name, u.email as employee_email FROM leaves l JOIN users u ON u.id=l.employee_id WHERE l.status='Pending'")
-    recent = query_db("SELECT l.*, u.name as employee_name FROM leaves l JOIN users u ON u.id=l.employee_id ORDER BY l.applied_at DESC LIMIT 20")
-    return render_template('hr_dashboard.html', user=user, pending=pending, recent=recent)
+        user = current_user()
+        if not user or user['role'] != 'hr':
+            flash("Access denied.", "danger")
+            return redirect(url_for('index'))
+        pending = query_db("SELECT l.*, u.name as employee_name, u.email as employee_email FROM leaves l JOIN users u ON u.id=l.employee_id WHERE l.status='Pending'")
+        recent = query_db("SELECT l.*, u.name as employee_name FROM leaves l JOIN users u ON u.id=l.employee_id ORDER BY l.applied_at DESC LIMIT 20")
+        return render_template('hr_dashboard.html', user=user, pending=pending, recent=recent)
 
 # View single leave (HR or owner)
 @app.route('/leave/<int:leave_id>')
 def view_leave(leave_id):
-    user = current_user()
-    l = query_db("SELECT l.*, u.name as employee_name, u.email as employee_email, u.leave_balance FROM leaves l JOIN users u ON u.id = l.employee_id WHERE l.id = ?", (leave_id,), one=True)
-    if not l:
-        flash("Leave not found.", "danger")
-        return redirect(url_for('index'))
-    if user['role'] != 'hr' and user['id'] != l['employee_id']:
-        flash("Access denied.", "danger")
-        return redirect(url_for('index'))
-    return render_template('view_leave.html', user=user, leave=l)
+        user = current_user()
+        l = query_db("SELECT l.*, u.name as employee_name, u.email as employee_email, u.leave_balance FROM leaves l JOIN users u ON u.id = l.employee_id WHERE l.id = ?", (leave_id,), one=True)
+        if not l:
+            flash("Leave not found.", "danger")
+            return redirect(url_for('index'))
+        if user['role'] != 'hr' and user['id'] != l['employee_id']:
+            flash("Access denied.", "danger")
+            return redirect(url_for('index'))
+        return render_template('view_leave.html', user=user, leave=l)
 
 # --- HR Review (Approve / Reject) ---
 @app.route('/hr/review/<int:leave_id>', methods=['POST'])
 def review_leave(leave_id):
-    user = current_user()
-    if not user or user['role'] != 'hr':
-        flash("Access denied.", "danger")
-        return redirect(url_for('index'))
+        user = current_user()
+        if not user or user['role'] != 'hr':
+            flash("Access denied.", "danger")
+            return redirect(url_for('index'))
 
-    action = request.form.get('action')
-    comment = request.form.get('comment','')
-    l = query_db("SELECT * FROM leaves WHERE id=?", (leave_id,), one=True)
-    emp = query_db("SELECT * FROM users WHERE id=?", (l['employee_id'],), one=True)
-    db = get_db()
+        action = request.form.get('action')
+        comment = request.form.get('comment','')
+        l = query_db("SELECT * FROM leaves WHERE id=?", (leave_id,), one=True)
+        emp = query_db("SELECT * FROM users WHERE id=?", (l['employee_id'],), one=True)
+        db = get_db()
 
-    if action == 'approve':
-        db.execute("UPDATE users SET leave_balance=leave_balance-? WHERE id=?", (l['days'], emp['id']))
-        db.execute("UPDATE leaves SET status='Approved', reviewed_by=?, reviewed_at=?, review_comment=? WHERE id=?",
-                   (user['id'], iso_now(), comment, leave_id))
-        db.commit()
+        if action == 'approve':
+            db.execute("UPDATE users SET leave_balance=leave_balance-? WHERE id=?", (l['days'], emp['id']))
+            db.execute("UPDATE leaves SET status='Approved', reviewed_by=?, reviewed_at=?, review_comment=? WHERE id=?",
+                    (user['id'], iso_now(), comment, leave_id))
+            db.commit()
 
-        msg = Message(
-            subject="Your Leave Request Was Approved",
-            recipients=[emp['email']],
-            body=f"Hello {emp['name']},\n\nYour leave from {l['start_date']} to {l['end_date']} has been APPROVED.\n\n- HR Department"
-        )
-        with employee_mail_app.app_context():
-            mail_emp.send(msg)
+            msg = Message(
+                subject="MoraLeave System -Your Leave Request Was Approved",
+                recipients=[emp['email']],
+                body=f"Hello {emp['name']},\n\nYour leave from {l['start_date']} to {l['end_date']} has been APPROVED.\n\n- HR Department"
+            )
+            with employee_mail_app.app_context():
+                mail_emp.send(msg)
 
-        flash("Leave approved and employee notified.", "success")
+            flash("Leave approved and employee notified.", "success")
 
-    elif action == 'reject':
-        db.execute("UPDATE leaves SET status='Rejected', reviewed_by=?, reviewed_at=?, review_comment=? WHERE id=?",
-                   (user['id'], iso_now(), comment, leave_id))
-        db.commit()
+        elif action == 'reject':
+            db.execute("UPDATE leaves SET status='Rejected', reviewed_by=?, reviewed_at=?, review_comment=? WHERE id=?",
+                    (user['id'], iso_now(), comment, leave_id))
+            db.commit()
 
-        msg = Message(
-            subject="Your Leave Request Was Rejected",
-            recipients=[emp['email']],
-            body=f"Hello {emp['name']},\n\nYour leave from {l['start_date']} to {l['end_date']} has been REJECTED.\n\nReason: {comment}\n\n- HR Department"
-        )
-        with employee_mail_app.app_context():
-            mail_emp.send(msg)
+            msg = Message(
+                subject="MoraLeave System -Your Leave Request Was Rejected",
+                recipients=[emp['email']],
+                body=f"Hello {emp['name']},\n\nYour leave from {l['start_date']} to {l['end_date']} has been REJECTED.\n\nReason: {comment}\n\n- HR Department"
+            )
+            with employee_mail_app.app_context():
+                mail_emp.send(msg)
 
-        flash("Leave rejected and employee notified.", "info")
+            flash("Leave rejected and employee notified.", "info")
 
-    # Always redirect back to HR dashboard
-    return redirect(url_for('hr_dashboard'))
+        # Always redirect back to HR dashboard
+        return redirect(url_for('hr_dashboard'))
 
 # Simple account page (view balance)
 @app.route('/account')
 def account():
-    user = current_user()
-    if not user:
-        flash("Please login.", "warning")
-        return redirect(url_for('login'))
-    user_db = query_db("SELECT * FROM users WHERE id = ?", (user['id'],), one=True)
-    return render_template('account.html', user=user_db)
+        user = current_user()
+        if not user:
+            flash("Please login.", "warning")
+            return redirect(url_for('login'))
+        user_db = query_db("SELECT * FROM users WHERE id = ?", (user['id'],), one=True)
+        return render_template('account.html', user=user_db)
 
 # About the Maker  
 @app.route('/about')
@@ -336,7 +362,7 @@ def delete_leave(leave_id):
         # notify employee about deletion of their approved leave
         emp = query_db("SELECT * FROM users WHERE id=?", (leave['employee_id'],), one=True)
         msg = Message(
-            subject="Your Approved Leave Has Been Deleted",
+            subject="MoraLeave System -Your Approved Leave Has Been Deleted",
             recipients=[emp['email']],
             body=f"Hello {emp['name']},\n\nYour approved leave from {leave['start_date']} to {leave['end_date']} "
                  f"was deleted by HR. Your leave balance has been restored.\n\n- HR Department"
@@ -390,17 +416,17 @@ def initdb_command():
         with open(SCHEMA, "r") as f:
             db.executescript(f.read())
         db.commit()
-    print("✅ Database initialized successfully.")
+    print("MoraLeave System database initialized successfully.")
 
 if __name__ == "__main__":
     if not os.path.exists(DB_PATH):
-        print("⏳ Creating database...")
+        print("Creating database...")
         with app.app_context():
             db = get_db()
             with open(SCHEMA, "r") as f:
                 db.executescript(f.read())
             db.commit()
-        print("✅ Database created successfully at", DB_PATH)
+        print("MoraLeave System database created successfully at", DB_PATH)
     else:
-        print("✅ Database already exists.")
+        print("Database already exists.")
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -11,18 +11,27 @@
       <label>Email</label>
       <input type="email" name="email" placeholder="Enter your email" required>
 
-   <label>Password</label>
+      <label>Password</label>
       <input type="password" name="password" id="password" placeholder="Enter your password" required>
 
-       <div class="show-password" style="display: flex; align-items: center; justify-content: flex-start; gap: 5px;">
-  <input type="checkbox" id="showPassword" onclick="togglePassword()"> 
-  <label for="showPassword">Show Password</label>
-</div>
+      <div class="show-password" style="display: flex; align-items: center; justify-content: flex-start; gap: 5px;">
+        <input type="checkbox" id="showPassword" onclick="togglePassword()"> 
+        <label for="showPassword">Show Password</label>
+      </div>
 
       <label>Role</label>
       <select name="role">
         <option value="employee">Employee</option>
         <option value="hr">HR</option>
+      </select>
+
+      <!-- Gender Picker Added Here -->
+     <label>Gender</label>
+      <select name="gender" required>
+        <option value="">Select gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
       </select>
 
       <button type="submit">Register</button>

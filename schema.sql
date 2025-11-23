@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   role TEXT NOT NULL CHECK(role IN ('employee','hr')),
+  gender TEXT CHECK(gender IN ('Male','Female')) NOT NULL,
+  status TEXT DEFAULT 'Pending',
   leave_balance REAL DEFAULT 15,
   otp TEXT,
   otp_expiry TEXT,
